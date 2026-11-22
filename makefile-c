@@ -1,0 +1,57 @@
+##############################################################################
+################################ makefile-c ##################################
+##############################################################################
+#                                                                            #
+#   complete makefile of GeneralizedAssignmentBlock                          #
+#                                                                            #
+#   The makefile defines internally all external libraries (comprised the    #
+#   SMS++ one) required by GeneralizedAssignmentBlock. Accordingly, all necessary         #
+#   OBJ, H, -I directives, external libraries + -L< libdirs > are added to   #
+#   the corresponding GAPBk* macros.                                         #
+#                                                                            #
+#   Input:  $(CC)        = compiler command                                  #
+#           $(SW)        = compiler options                                  #
+#           $(GAPBkSDR)  = the directory where GeneralizedAssignmentBlock source is       #
+#           $(GAPBkODR)  = the directory where the objects have to be put    #
+#                                                                            #
+#   Output: $(GAPBkOBJ)  = the final object(s) / library                     #
+#           $(GAPBkLIB)  = external libraries + -L< libdirs >                #
+#           $(GAPBkH)    = the .h files to include for GeneralizedAssignmentBlock         #
+#       $(GAPBkINC)  = the -I$( GeneralizedAssignmentBlock directory )       #
+#                                                                            #
+#                             Antonio Frangioni                              #
+#                         Dipartimento di Informatica                        #
+#                             Universita' di Pisa                            #
+#                                                                            #
+##############################################################################
+
+# define & include the necessary modules- - - - - - - - - - - - - - - - - - -
+# if a module is not used in the current configuration, just comment out the
+# corresponding include line
+# each module outputs some macros to be used here:
+# *OBJ is the final object/library
+# *H   is the list of all include files
+# *INC is the -I< include directories >
+
+# define input macros for SMS++ complete makefile, then include it
+SMS++SDR = $(GAPBkSDR)/../SMS++
+include $(SMS++SDR)/lib/makefile-c
+
+# include the makefile requiring all external modules in input
+include $(GAPBkSDR)/makefile
+
+# macros to be exported - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# append external -I directives to GAPBkINC, GAPBkOBJ and GAPBkH as defined
+# by the makefile, thus the := assignment has to be used (use GNU make)
+GAPBkOBJ := $(GAPBkOBJ) $(SMS++OBJ)
+GAPBkINC := $(GAPBkINC) $(SMS++INC)
+
+# external libraries for GeneralizedAssignmentBlock
+GAPBkLIB = $(SMS++LIB)
+
+# the objects as the shared libraries of the module and of those whose
+# objects it takes [see SMS++/lib/makefile-shared]
+$(eval $(call SMSppSOlib,GAPBk))
+
+############################ End of makefile #################################
