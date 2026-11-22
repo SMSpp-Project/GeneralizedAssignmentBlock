@@ -6,11 +6,26 @@
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
-<!-- TODO: describe here, in a few paragraphs, what the module provides: the
-     :Block (and/or :Solver) classes it defines and the mathematical
-     structure they encode. -->
+`GeneralizedAssignmentBlock` is a SMS++ `:Block` for the Generalized
+Assignment Problem (GAP), in which N jobs are to be assigned to M agents:
+assigning job j to agent i costs C[ i ][ j ] and uses A[ i ][ j ] of the
+resource of agent i, whose capacity is B[ i ], each job goes to exactly one
+agent and the total cost is minimized (see, e.g., D.G. Cattrysse, L.N. Van
+Wassenhove, "A survey of algorithms for the generalized assignment
+problem", European Journal of Operational Research 60(3), 260-272, 1992).
 
-`GeneralizedAssignmentBlock` is a SMS++ :Block for ...
+The problem is represented as M sub-`Block`, one minimization
+`BinaryKnapsackBlock` for each agent, whose items are the jobs; the
+`GeneralizedAssignmentBlock` itself only holds the constraints that link
+them, i.e., each job to exactly one agent. Hence, relaxing these
+constraints in a Lagrangian way leaves M independent 0-1 knapsack
+problems, which any `Solver` of `BinaryKnapsackBlock` can solve, while a
+`:MILPSolver` solves the whole problem out of its abstract representation.
+
+The data can be read from netCDF (`deserialize()`), from a text file in the
+format of one instance of the OR-Library (the numbers of agents and jobs,
+the costs, the resources and the capacities) or from memory (`load()`); the
+instances of types A, B, C and D of the OR-Library are in `data/txt`.
 
 
 ## Getting started
@@ -26,6 +41,8 @@ follows is about building the module yourself.
 
 - The [SMS++ core library](https://gitlab.com/smspp/smspp) and its
   requirements.
+
+- [BinaryKnapsackBlock](https://gitlab.com/smspp/binaryknapsackblock).
 
 ### Build and install with CMake
 

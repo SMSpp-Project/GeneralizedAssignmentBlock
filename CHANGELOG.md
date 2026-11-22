@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - initial module skeleton generated from ModuleTemplate
 
+- `GeneralizedAssignmentBlock`, the Generalized Assignment Problem as one
+  minimization `BinaryKnapsackBlock` for each agent, linked by the
+  assignment constraints, with the instances of types A, B, C and D of the
+  OR-Library in `data/txt`
+
 ### Changed
 
 - the makefiles of a new module give its shared library by default on Linux

@@ -2,18 +2,19 @@
 /*------------------- File GeneralizedAssignmentBlock.h --------------------*/
 /*--------------------------------------------------------------------------*/
 /** @file
- * Header file for the *concrete* class GeneralizedAssignmentBlock, which implements the
- * Block concept [see Block.h]. This is a minimal, compilable skeleton meant
- * to be replaced with the actual model: it shows the canonical structure of
- * an SMS++ Block (factory registration, deserialize() from netCDF, the
- * generation of the "abstract representation") with the standard file
- * layout and comment style of the SMS++ project.
+ * Header file for the class GeneralizedAssignmentBlock, which implements the
+ * Block concept [see Block.h] for the Generalized Assignment Problem, as a
+ * set of BinaryKnapsackBlock linked by assignment constraints.
  *
  * \author Antonio Frangioni \n
  *         Dipartimento di Informatica \n
  *         Universita' di Pisa \n
  *
- * \copyright &copy; by Antonio Frangioni
+ * \author Donato Meoli \n
+ *         Dipartimento di Informatica \n
+ *         Universita' di Pisa \n
+ *
+ * \copyright &copy; by Antonio Frangioni, Donato Meoli
  */
 /*--------------------------------------------------------------------------*/
 /*----------------------------- DEFINITIONS --------------------------------*/
@@ -27,7 +28,9 @@
 /*------------------------------ INCLUDES ----------------------------------*/
 /*--------------------------------------------------------------------------*/
 
-#include "Block.h"
+#include "BinaryKnapsackBlock.h"
+
+#include "FRowConstraint.h"
 
 /*--------------------------------------------------------------------------*/
 /*------------------------------ NAMESPACE ---------------------------------*/
@@ -39,160 +42,329 @@ namespace SMSpp_di_unipi_it
 /*--------------------------------------------------------------------------*/
 /*-------------------------------- CLASSES ---------------------------------*/
 /*--------------------------------------------------------------------------*/
-/** @defgroup GeneralizedAssignmentBlock_CLASSES Classes in GeneralizedAssignmentBlock.h
+/** @defgroup GeneralizedAssignmentBlock_CLASSES Classes in \
+ *            GeneralizedAssignmentBlock.h
  *  @{ */
 
 /*--------------------------------------------------------------------------*/
 /*-------------------- CLASS GeneralizedAssignmentBlock --------------------*/
 /*--------------------------------------------------------------------------*/
-/// implementation of the Block concept for ... (describe the model here)
-/** The GeneralizedAssignmentBlock class implements the Block concept [see Block.h] for
- * ... (describe here the mathematical structure the Block encodes: the
- * Variable it holds, the Constraint linking them, the Objective).
+/*--------------------------- GENERAL NOTES --------------------------------*/
+/*--------------------------------------------------------------------------*/
+/// a Block for the Generalized Assignment Problem
+/** The GeneralizedAssignmentBlock class implements the Block concept [see
+ * Block.h] for the Generalized Assignment Problem (GAP). It is defined on a
+ * set of M agents and a set of N jobs; assigning job j to agent i costs
+ * C[ i ][ j ] and uses A[ i ][ j ] of the resource of agent i, whose
+ * capacity is B[ i ]. Each job is assigned to exactly one agent, the
+ * resource used by each agent is at most its capacity, and the total cost is
+ * minimized:
+ * \f[
+ *  \min \Bigl\{ \, \sum_{ i = 1 }^M \sum_{ j = 1 }^N C_{ij} x_{ij} \;:\;
+ *  \sum_{ i = 1 }^M x_{ij} = 1 \;\; j = 1 , \ldots , N \,,\;
+ *  \sum_{ j = 1 }^N A_{ij} x_{ij} \leq B_i \;\; i = 1 , \ldots , M \,,\;
+ *  x \in \{ 0 , 1 \}^{ M \times N } \, \Bigr\} \;.
+ * \f]
  *
- * This skeleton only provides the mandatory machinery: replace the TODOs
- * with the actual model. */
+ * The problem is represented by M sub-Block, one BinaryKnapsackBlock for
+ * each agent, the i-th one having the N jobs as its items, in their order,
+ * with the A[ i ][ j ] as weights, the C[ i ][ j ] as profits and B[ i ] as
+ * capacity, and a minimization objective. Thus, the
+ * GeneralizedAssignmentBlock itself only has the static Constraint linking
+ * the sub-Block, i.e., the N "assignment" ones above, and no Variable and
+ * Objective of its own: the objective is the sum of these of the
+ * sub-Block. Relaxing the assignment Constraint, as a LagrangianDualSolver
+ * does, leaves one knapsack for each agent, and the Lagrangian Dual gives
+ * the bound of the Dantzig-Wolfe reformulation of the problem. */
 
 class GeneralizedAssignmentBlock : public Block
 {
+/*--------------------------------------------------------------------------*/
 /*----------------------- PUBLIC PART OF THE CLASS -------------------------*/
+/*--------------------------------------------------------------------------*/
 
  public:
 
-/*------------------------------ CONSTRUCTOR -------------------------------*/
- /// constructor of GeneralizedAssignmentBlock, taking a pointer to the father Block
- /** Constructor of GeneralizedAssignmentBlock. It accepts a pointer to the father Block
-  * (defaulting to nullptr, both because the root Block has no father and so
-  * that this can also be used as the void constructor required by the Block
-  * factory). */
+/*--------------------------------------------------------------------------*/
+/*--------------------- CONSTRUCTOR AND DESTRUCTOR -------------------------*/
+/*--------------------------------------------------------------------------*/
+/** @name Constructor and Destructor
+ *  @{ */
+
+ /// constructor of GeneralizedAssignmentBlock, taking a pointer to the father
+ /** Constructor of GeneralizedAssignmentBlock. It accepts a pointer to the
+  * father Block, which can be of any type, defaulting to nullptr so that
+  * this can also be used as the void constructor required by the Block
+  * factory. */
 
  explicit GeneralizedAssignmentBlock( Block * father = nullptr )
-  : Block( father ) , AR( 0 ) {}
+  : Block( father ) , f_M( 0 ) , f_N( 0 ) , AR( 0 ) {}
 
-/*------------------------------ DESTRUCTOR --------------------------------*/
- /// destructor of GeneralizedAssignmentBlock
+/*--------------------------------------------------------------------------*/
+ /// destructor of GeneralizedAssignmentBlock: deletes the sub-Block
 
- virtual ~GeneralizedAssignmentBlock() = default;
+ ~GeneralizedAssignmentBlock() override { guts_of_destructor(); }
 
+/**@} ----------------------------------------------------------------------*/
 /*-------------------------- OTHER INITIALIZATIONS -------------------------*/
+/*--------------------------------------------------------------------------*/
+/** @name Other initializations
+ *  @{ */
+
+ /// loads the Generalized Assignment instance from memory
+ /** Loads the Generalized Assignment instance from memory, moving the data
+  * from the parameters:
+  *
+  * - m           is the number of agents
+  *
+  * - n           is the number of jobs
+  *
+  * - Costs       is the vector of the costs, of size m * n, arranged
+  *               agent-wise: C[ i ][ j ] is Costs[ i * n + j ]
+  *
+  * - Weights     is the vector of the resources used, of size m * n,
+  *               arranged as Costs
+  *
+  * - Capacities  is the vector of the capacities of the agents, of size m
+  *
+  * Any previous instance, together with its sub-Block and its abstract
+  * representation, is discarded. Like load( std::istream & ), if there is
+  * any Solver attached to this GeneralizedAssignmentBlock then a
+  * NBModification (the "nuclear option") is issued. */
+
+ void load( Index m , Index n , std::vector< double > && Costs ,
+            std::vector< double > && Weights ,
+            std::vector< double > && Capacities );
+
+/*--------------------------------------------------------------------------*/
+ /// loads the GeneralizedAssignmentBlock out of an istream
+ /** Loads the GeneralizedAssignmentBlock out of an istream, in the format of
+  * one instance of the OR-Library:
+  *
+  * - the number m of agents and the number n of jobs
+  *
+  * - for each agent i = 0 , ... , m - 1, the n costs C[ i ][ j ]
+  *
+  * - for each agent i = 0 , ... , m - 1, the n resources A[ i ][ j ]
+  *
+  * - the m capacities B[ i ]
+  *
+  * the elements being separated by whitespaces; \p frmt is ignored. Any
+  * previous instance is discarded, and if there is any Solver attached to
+  * this GeneralizedAssignmentBlock then a NBModification is issued. */
+
+ void load( std::istream & input , char frmt = 0 ) override;
+
+/*--------------------------------------------------------------------------*/
  /// extends Block::deserialize( netCDF::NcGroup )
  /** Extends Block::deserialize( netCDF::NcGroup ) to the specific format of
-  * GeneralizedAssignmentBlock. Besides the mandatory "type" attribute of any :Block, the
-  * group should contain the data describing the model.
+  * a GeneralizedAssignmentBlock. Besides what is managed by
+  * Block::deserialize(), the group must contain:
   *
-  * TODO: read the model data from \p group, then call the base class
-  * method. */
-
- void deserialize( const netCDF::NcGroup & group ) override
- {
-  // TODO: read the GeneralizedAssignmentBlock-specific data out of group
-
-  Block::deserialize( group );
-  }
-
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
- /// loads the GeneralizedAssignmentBlock out of an istream
- /** Loads the GeneralizedAssignmentBlock out of an istream, whose format is defined by
-  * \p frmt.
+  * - the dimension "NAgents", the number of agents;
   *
-  * TODO: implement (or leave the throw if only netCDF input is
-  * supported). */
-
- void load( std::istream & input , char frmt = 0 ) override
- {
-  throw( std::logic_error( "GeneralizedAssignmentBlock::load: not implemented yet" ) );
-  }
-
-/*---------------------- Methods for handling Variable ---------------------*/
- /// generates the abstract Variable of the GeneralizedAssignmentBlock
- /** TODO: construct the ColVariable (or :Variable) of the model and expose
-  * them with add_static_variable() / add_dynamic_variable(). */
-
- void generate_abstract_variables( Configuration * stvv = nullptr ) override
- {
-  if( AR & HasVar )  // the Variable are there already
-   return;           // nothing to do
-
-  // TODO: generate the Variable here and expose them
-  //       with add_static_variable() / add_dynamic_variable()
-
-  AR |= HasVar;
-  }
-
-/*--------------------- Methods for handling Constraint --------------------*/
- /// generates the abstract Constraint of the GeneralizedAssignmentBlock
- /** TODO: construct the Constraint of the model and expose them with
-  * add_static_constraint() / add_dynamic_constraint(). */
-
- void generate_abstract_constraints( Configuration * stcc = nullptr ) override
- {
-  if( AR & HasCns )  // the Constraint are there already
-   return;           // nothing to do
-
-  // TODO: generate the Constraint here and expose them
-  //       with add_static_constraint() / add_dynamic_constraint()
-
-  AR |= HasCns;
-  }
-
-/*---------------------- Methods for handling Objective --------------------*/
- /// generates the abstract Objective of the GeneralizedAssignmentBlock
- /** TODO: construct the Objective and set it with set_objective(). */
-
- void generate_objective( Configuration * objc = nullptr ) override
- {
-  if( AR & HasObj )  // the Objective is there already
-   return;           // nothing to do
-
-  // TODO: generate the Objective here and set it with set_objective()
-
-  AR |= HasObj;
-  }
-
-/*---- Methods for checking the state of the GeneralizedAssignmentBlock ----*/
- /// returns true if any part of the abstract representation is there
-
- bool anyone_there( void ) const override
- {
-  return( AR ? true : Block::anyone_there() );
-  }
-
-/*---------------------------- Methods for printing ------------------------*/
- /// prints the GeneralizedAssignmentBlock on an ostream with the given verbosity
- /** Public, as Block::print() is, so that whoever holds a GeneralizedAssignmentBlock can
-  * print it with a given verbosity.
+  * - the dimension "NJobs", the number of jobs;
   *
-  * TODO: implement the "complete" formats (matching load()) if needed. */
+  * - the variable "Costs", of type double and indexed over "NAgents" and
+  *   "NJobs", the costs of the assignments;
+  *
+  * - the variable "Weights", of type double and indexed over "NAgents" and
+  *   "NJobs", the resources used by the assignments;
+  *
+  * - the variable "Capacities", of type double and indexed over "NAgents",
+  *   the capacities of the agents.
+  *
+  * Any previous instance is discarded, and the NBModification is issued by
+  * Block::deserialize(). */
 
- void print( std::ostream & output , char vlvl = 0 ) const override
- {
-  output << "GeneralizedAssignmentBlock" << std::endl;
+ void deserialize( const netCDF::NcGroup & group ) override;
+
+/*--------------------------------------------------------------------------*/
+ /// generates the Variable of the sub-Block
+ /** The GeneralizedAssignmentBlock has no Variable of its own: this
+  * generates these of the sub-Block, which the linking Constraint use. */
+
+ void generate_abstract_variables( Configuration * stvv = nullptr ) override;
+
+/*--------------------------------------------------------------------------*/
+ /// generates the linking Constraint, and these of the sub-Block
+ /** Generates the N "assignment" Constraint, which link the sub-Block
+  * (whose Variable are generated first, if they are not there yet), and
+  * then the Constraint of the sub-Block. The group is named "assign". No
+  * Modification is issued. */
+
+ void generate_abstract_constraints( Configuration * stcc = nullptr )
+  override;
+
+/**@} ----------------------------------------------------------------------*/
+/*------ Methods for reading the data of the GeneralizedAssignmentBlock ----*/
+/*--------------------------------------------------------------------------*/
+/** @name Methods for reading the data of the GeneralizedAssignmentBlock
+ *  @{ */
+
+ /// the sense of the Objective, which is to be minimized
+
+ [[nodiscard]] int get_objective_sense( void ) const override final {
+  return( Objective::eMin );
   }
 
+/*--------------------------------------------------------------------------*/
+ /// the number of agents
+
+ [[nodiscard]] Index get_NAgents( void ) const { return( f_M ); }
+
+/*--------------------------------------------------------------------------*/
+ /// the number of jobs
+
+ [[nodiscard]] Index get_NJobs( void ) const { return( f_N ); }
+
+/*--------------------------------------------------------------------------*/
+ /// the cost of assigning job j to agent i
+
+ [[nodiscard]] double get_Cost( Index i , Index j ) const {
+  check( i , j , "get_Cost" );
+  return( v_C[ i * f_N + j ] );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the resource of agent i used by job j
+
+ [[nodiscard]] double get_Weight( Index i , Index j ) const {
+  check( i , j , "get_Weight" );
+  return( v_A[ i * f_N + j ] );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the capacity of agent i
+
+ [[nodiscard]] double get_Capacity( Index i ) const {
+  check( i , 0 , "get_Capacity" );
+  return( v_B[ i ] );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the vector of the costs, arranged agent-wise
+
+ [[nodiscard]] const std::vector< double > & get_Costs( void ) const {
+  return( v_C );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the vector of the resources used, arranged agent-wise
+
+ [[nodiscard]] const std::vector< double > & get_Weights( void ) const {
+  return( v_A );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the vector of the capacities
+
+ [[nodiscard]] const std::vector< double > & get_Capacities( void ) const {
+  return( v_B );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// the sub-Block of agent i
+
+ [[nodiscard]] BinaryKnapsackBlock * get_knapsack( Index i ) const {
+  check( i , 0 , "get_knapsack" );
+  return( static_cast< BinaryKnapsackBlock * >( v_Block[ i ] ) );
+  }
+
+/**@} ----------------------------------------------------------------------*/
+/*----------------------- Methods for handling Solution --------------------*/
+/*--------------------------------------------------------------------------*/
+/** @name Methods for handling Solution
+ *  @{ */
+
+ /// the value of \f$ x_{ij} \f$, i.e., whether job j is assigned to agent i
+ /** The value of \f$ x_{ij} \f$ in the solution of the sub-Block of agent i
+  * (0 if no solution is there). */
+
+ [[nodiscard]] double get_x( Index i , Index j ) const {
+  check( i , j , "get_x" );
+  return( get_knapsack( i )->get_x( j ) );
+  }
+
+/**@} ----------------------------------------------------------------------*/
+/*-- METHODS FOR LOADING, PRINTING & SAVING THE GeneralizedAssignmentBlock -*/
+/*--------------------------------------------------------------------------*/
+/** @name Methods for loading, printing & saving the
+ *        GeneralizedAssignmentBlock
+ *  @{ */
+
+ /// extends Block::serialize( netCDF::NcGroup )
+ /** Extends Block::serialize( netCDF::NcGroup ) to the specific format of a
+  * GeneralizedAssignmentBlock [see deserialize( netCDF::NcGroup )]. */
+
+ void serialize( netCDF::NcGroup & group ) const override;
+
+/*--------------------------------------------------------------------------*/
+ /// prints the data of the GeneralizedAssignmentBlock on an ostream
+
+ void print( std::ostream & output , char vlvl = 0 ) const override;
+
+/** @} ---------------------------------------------------------------------*/
 /*-------------------- PROTECTED PART OF THE CLASS -------------------------*/
+/*--------------------------------------------------------------------------*/
 
  protected:
 
-/*--------------------------- PROTECTED FIELDS -----------------------------*/
+/*--------------------------------------------------------------------------*/
+/*---------------------------- PROTECTED FIELDS ----------------------------*/
+/*--------------------------------------------------------------------------*/
 
- // TODO: the data of the model goes here
+ Index f_M;                   ///< the number of agents
+ Index f_N;                   ///< the number of jobs
 
- unsigned char AR;     ///< bit-wise coded: what abstract is there
+ std::vector< double > v_C;   ///< the costs, agent-wise
+ std::vector< double > v_A;   ///< the resources used, agent-wise
+ std::vector< double > v_B;   ///< the capacities
+
+ unsigned char AR;            ///< bit-wise coded: what abstract is there
 
  static constexpr unsigned char HasVar = 1;
  ///< first bit of AR == 1 if the Variable have been constructed
- static constexpr unsigned char HasObj = 2;
- ///< second bit of AR == 1 if the Objective has been constructed
- static constexpr unsigned char HasCns = 4;
- ///< third bit of AR == 1 if the Constraint have been constructed
 
+ static constexpr unsigned char HasCns = 2;
+ ///< second bit of AR == 1 if the Constraint have been constructed
+
+ /// the assignment Constraint: each job to exactly one agent
+ std::vector< FRowConstraint > v_assign;
+
+/*--------------------------------------------------------------------------*/
 /*--------------------- PRIVATE PART OF THE CLASS --------------------------*/
+/*--------------------------------------------------------------------------*/
 
  private:
 
+/*--------------------------------------------------------------------------*/
 /*-------------------------- PRIVATE METHODS -------------------------------*/
+/*--------------------------------------------------------------------------*/
 
- SMSpp_insert_in_factory_h;  // insert GeneralizedAssignmentBlock in the Block factory
+ /// throws if agent i or job j is not there
+
+ void check( Index i , Index j , const char * who ) const {
+  if( ( i >= f_M ) || ( j >= f_N ) )
+   throw( std::invalid_argument( std::string(
+		  "GeneralizedAssignmentBlock::" ) + who + ": invalid index" ) );
+  }
+
+/*--------------------------------------------------------------------------*/
+ /// discards the instance, its sub-Block and its abstract representation
+
+ void guts_of_destructor( void );
+
+/*--------------------------------------------------------------------------*/
+ /// checks the data, then builds the sub-Block
+
+ void build( const std::string & prfx );
+
+/*--------------------------------------------------------------------------*/
+/*---------------------------- PRIVATE FIELDS ------------------------------*/
+/*--------------------------------------------------------------------------*/
+
+ SMSpp_insert_in_factory_h;  // insert it in the Block factory
 
 /*--------------------------------------------------------------------------*/
 
@@ -202,9 +374,7 @@ class GeneralizedAssignmentBlock : public Block
 
 /*--------------------------------------------------------------------------*/
 
- }  // end( namespace SMSpp_di_unipi_it )
-
-/*--------------------------------------------------------------------------*/
+}  // end( namespace SMSpp_di_unipi_it )
 
 #endif  /* GeneralizedAssignmentBlock.h included */
 
