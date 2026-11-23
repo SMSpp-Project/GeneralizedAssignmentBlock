@@ -190,6 +190,73 @@ void GeneralizedAssignmentBlock::generate_abstract_constraints(
  }  // end( GeneralizedAssignmentBlock::generate_abstract_constraints )
 
 /*--------------------------------------------------------------------------*/
+/*------------------------- Methods for R3 Blocks --------------------------*/
+/*--------------------------------------------------------------------------*/
+
+Block * GeneralizedAssignmentBlock::get_R3_Block( Configuration * r3bc ,
+						  Block * base ,
+						  Block * father )
+{
+ if( r3bc )
+  throw( std::invalid_argument( "GeneralizedAssignmentBlock::get_R3_Block: "
+				"only the copy is supported" ) );
+
+ GeneralizedAssignmentBlock * copy;
+ if( base ) {
+  copy = dynamic_cast< GeneralizedAssignmentBlock * >( base );
+  if( ! copy )
+   throw( std::invalid_argument( "GeneralizedAssignmentBlock::get_R3_Block:"
+				 " base is not a GeneralizedAssignmentBlock"
+				 ) );
+  }
+ else
+  copy = new GeneralizedAssignmentBlock( father );
+
+ copy->load( f_M , f_N , std::vector< double >( v_C ) ,
+	     std::vector< double >( v_A ) , std::vector< double >( v_B ) );
+
+ // the sub-Block that load() has built are made copies of these of this,
+ // with the items they have fixed, if any
+ for( Index i = 0 ; i < v_Block.size() ; ++i )
+  v_Block[ i ]->get_R3_Block( nullptr , copy->v_Block[ i ] , copy );
+
+ return( copy );
+
+ }  // end( GeneralizedAssignmentBlock::get_R3_Block )
+
+/*--------------------------------------------------------------------------*/
+
+void GeneralizedAssignmentBlock::map_back_solution( Block * R3B ,
+						    Configuration * r3bc ,
+						    Configuration * solc )
+{
+ auto copy = dynamic_cast< GeneralizedAssignmentBlock * >( R3B );
+ if( ( ! copy ) || ( copy->v_Block.size() != v_Block.size() ) )
+  throw( std::invalid_argument( "GeneralizedAssignmentBlock::"
+				"map_back_solution: R3B is not a copy" ) );
+
+ for( Index i = 0 ; i < v_Block.size() ; ++i )
+  v_Block[ i ]->map_back_solution( copy->v_Block[ i ] );
+
+ }  // end( GeneralizedAssignmentBlock::map_back_solution )
+
+/*--------------------------------------------------------------------------*/
+
+void GeneralizedAssignmentBlock::map_forward_solution( Block * R3B ,
+						       Configuration * r3bc ,
+						       Configuration * solc )
+{
+ auto copy = dynamic_cast< GeneralizedAssignmentBlock * >( R3B );
+ if( ( ! copy ) || ( copy->v_Block.size() != v_Block.size() ) )
+  throw( std::invalid_argument( "GeneralizedAssignmentBlock::"
+				"map_forward_solution: R3B is not a copy" ) );
+
+ for( Index i = 0 ; i < v_Block.size() ; ++i )
+  v_Block[ i ]->map_forward_solution( copy->v_Block[ i ] );
+
+ }  // end( GeneralizedAssignmentBlock::map_forward_solution )
+
+/*--------------------------------------------------------------------------*/
 /*-- METHODS FOR LOADING, PRINTING & SAVING THE GeneralizedAssignmentBlock -*/
 /*--------------------------------------------------------------------------*/
 

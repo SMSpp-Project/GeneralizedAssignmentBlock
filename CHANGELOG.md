@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   assignment constraints, with the instances of types A, B, C and D of the
   OR-Library in `data/txt`
 
+- `get_R3_Block()` gives an identical copy of the
+  `GeneralizedAssignmentBlock`, whose sub-Block are the copies of its own,
+  and `map_back_solution()` / `map_forward_solution()` write the solution of
+  one into the other
+
 ### Changed
 
 - the makefiles of a new module give its shared library by default on Linux
