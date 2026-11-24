@@ -6,11 +6,11 @@
  * factory, checking that the module links correctly and the class is
  * registered. Replace it with real tests exercising the module.
  *
- * \author Antonio Frangioni \n
+ * \author Donato Meoli \n
  *         Dipartimento di Informatica \n
  *         Universita' di Pisa \n
  *
- * \copyright &copy; by Antonio Frangioni
+ * \copyright &copy; by Donato Meoli
  */
 /*--------------------------------------------------------------------------*/
 /*------------------------------ INCLUDES ----------------------------------*/

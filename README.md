@@ -133,7 +133,7 @@ conduct, and the process for submitting merge requests to us.
 
 ### Current Lead Authors
 
-- **Antonio Frangioni**  
+- **Donato Meoli**  
   Dipartimento di Informatica  
   Università di Pisa
 

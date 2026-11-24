@@ -6,15 +6,11 @@
  * Block concept [see Block.h] for the Generalized Assignment Problem, as a
  * set of BinaryKnapsackBlock linked by assignment constraints.
  *
- * \author Antonio Frangioni \n
- *         Dipartimento di Informatica \n
- *         Universita' di Pisa \n
- *
  * \author Donato Meoli \n
  *         Dipartimento di Informatica \n
  *         Universita' di Pisa \n
  *
- * \copyright &copy; by Antonio Frangioni, Donato Meoli
+ * \copyright &copy; by Donato Meoli
  */
 /*--------------------------------------------------------------------------*/
 /*----------------------------- DEFINITIONS --------------------------------*/
