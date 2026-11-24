@@ -2,6 +2,12 @@
 #  GeneralizedAssignmentBlock — .gitignore
 # ============================================================
 
+# --- Project-specific ---------------------------------------
+# the instances, which come from the GitLab Package Registry [see data/]
+data/txt
+data/txt*.tgz
+data/.extracted*
+
 # --- C/C++ build artifacts ----------------------------------
 *.o
 *.obj

@@ -24,8 +24,7 @@ problems, which any `Solver` of `BinaryKnapsackBlock` can solve, while a
 
 The data can be read from netCDF (`deserialize()`), from a text file in the
 format of one instance of the OR-Library (the numbers of agents and jobs,
-the costs, the resources and the capacities) or from memory (`load()`); the
-instances of types A, B, C and D of the OR-Library are in `data/txt`.
+the costs, the resources and the capacities) or from memory (`load()`).
 
 
 ## Getting started
@@ -97,6 +96,25 @@ your OS `*` and edit the relevant bits (commenting out all the rest).
 
 Check the [SMS++ installation wiki](https://gitlab.com/smspp/smspp-project/-/wikis/Customize-the-configuration#location-of-required-libraries)
 for further details.
+
+
+## Data
+
+We provide a set of instances that is used by the testers of the [tests
+repo](https://gitlab.com/smspp/tests). It is not included in the repo: it is
+automatically downloaded by CMake when the tests need it, but if you are not
+using CMake you need to do it by hand, via
+
+```sh
+cd data
+wget https://gitlab.com/api/v4/projects/89369533/packages/generic/txt/2026-11-24/txt.tgz
+tar xzvf txt.tgz
+```
+
+This builds the folder `data/txt`, with 48 instances in the format of the
+OR-Library: those of types A, B, C and D of the OR-Library, with 5, 10 and
+20 agents and 100 and 200 jobs, and those of types D and E of Yagiura, with
+up to 80 agents and 1600 jobs.
 
 
 ## Getting help

@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GeneralizedAssignmentBlock`, the Generalized Assignment Problem as one
   minimization `BinaryKnapsackBlock` for each agent, linked by the
   assignment constraints, with the instances of types A, B, C and D of the
-  OR-Library in `data/txt`
+  OR-Library and of types D and E of Yagiura in the GitLab Package Registry,
+  which CMake downloads into `data/txt` when the tests need them
 
 - `get_R3_Block()` gives an identical copy of the
   `GeneralizedAssignmentBlock`, whose sub-Block are the copies of its own,
