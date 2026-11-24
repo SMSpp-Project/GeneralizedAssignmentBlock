@@ -26,6 +26,17 @@ The data can be read from netCDF (`deserialize()`), from a text file in the
 format of one instance of the OR-Library (the numbers of agents and jobs,
 the costs, the resources and the capacities) or from memory (`load()`).
 
+`RepairGeneralizedAssignmentSolver` is a heuristic `:Solver` that turns the
+point the `Variable` hold, typically the solution of the Lagrangian
+relaxation, into a feasible assignment: a greedy construction guided by
+that point and by the costs, then a local search with shift and swap moves,
+first on the excess over the capacities and then on the cost penalized by
+the excess, with adaptive weights (as in M. Yagiura, T. Ibaraki, F. Glover,
+"An ejection chain approach for the generalized assignment problem",
+INFORMS Journal on Computing 16(2), 133-151, 2004). It respects the fixed
+`Variable`, and it can be the primal recovery of a `PrimalProximalHeur`
+(`strRecoveryBSC`).
+
 
 ## Getting started
 

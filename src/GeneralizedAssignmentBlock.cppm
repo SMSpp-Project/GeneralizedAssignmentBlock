@@ -28,7 +28,7 @@
 
 module;
 
-#include "GeneralizedAssignmentBlock.h"
+#include "RepairGeneralizedAssignmentSolver.h"
 
 /*--------------------------------------------------------------------------*/
 /*----------------------------- MODULE PURVIEW -----------------------------*/
@@ -42,6 +42,9 @@ export namespace SMSpp_di_unipi_it {
 
  // GeneralizedAssignmentBlock.h
  using SMSpp_di_unipi_it::GeneralizedAssignmentBlock;
+
+ // RepairGeneralizedAssignmentSolver.h
+ using SMSpp_di_unipi_it::RepairGeneralizedAssignmentSolver;
 }
 
 /*--------------------------------------------------------------------------*/

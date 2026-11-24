@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `map_back_solution()` / `map_forward_solution()` write the solution of
   one into the other
 
+- `RepairGeneralizedAssignmentSolver`, a heuristic that turns the point the
+  Variable hold (say, the solution of the Lagrangian relaxation) into a
+  feasible assignment by a greedy construction guided by it and a local
+  search with shift and swap moves on the excess and on the penalized cost,
+  respecting the fixed Variable, which can be the primal recovery of a
+  `PrimalProximalHeur`
+
 ### Changed
 
 - the makefiles of a new module give its shared library by default on Linux

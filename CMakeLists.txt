@@ -95,7 +95,8 @@ smspp_keep_module(${modName})
 # but should be added to anything that links to it.
 # Note: do not GLOB files here.
 target_sources(${modName} PRIVATE
-        src/GeneralizedAssignmentBlock.cpp)
+        src/GeneralizedAssignmentBlock.cpp
+        src/RepairGeneralizedAssignmentSolver.cpp)
 
 # When using target_include_directories(), PUBLIC means that any targets
 # that link to this target also need that include directory.

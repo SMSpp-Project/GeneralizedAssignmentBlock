@@ -30,11 +30,13 @@
 
 # macros to be exported - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-GAPBkOBJ = $(GAPBkSDR)/obj/GeneralizedAssignmentBlock.o
+GAPBkOBJ = $(GAPBkSDR)/obj/GeneralizedAssignmentBlock.o \
+	$(GAPBkSDR)/obj/RepairGeneralizedAssignmentSolver.o
 
 GAPBkINC = -I$(GAPBkSDR)/include
 
-GAPBkH   = $(GAPBkSDR)/include/GeneralizedAssignmentBlock.h
+GAPBkH   = $(GAPBkSDR)/include/GeneralizedAssignmentBlock.h \
+	$(GAPBkSDR)/include/RepairGeneralizedAssignmentSolver.h
 
 # the C++20 module smspp.generalizedassignmentblock - - - - - - - - - - - - - -
 # [see makefile-mod of SMS++]
@@ -53,6 +55,12 @@ $(GAPBkSDR)/obj/GeneralizedAssignmentBlock.o: \
 	$(GAPBkSDR)/src/GeneralizedAssignmentBlock.cpp $(GAPBkH) $(BKBkH) \
 	$(SMS++H) $(SMS++OBJ)
 	$(CC) -c $(GAPBkSDR)/src/GeneralizedAssignmentBlock.cpp -o $@ \
+	$(GAPBkINC) $(BKBkINC) $(SMS++INC) $(SW)
+
+$(GAPBkSDR)/obj/RepairGeneralizedAssignmentSolver.o: \
+	$(GAPBkSDR)/src/RepairGeneralizedAssignmentSolver.cpp $(GAPBkH) \
+	$(BKBkH) $(SMS++H) $(SMS++OBJ)
+	$(CC) -c $(GAPBkSDR)/src/RepairGeneralizedAssignmentSolver.cpp -o $@ \
 	$(GAPBkINC) $(BKBkINC) $(SMS++INC) $(SW)
 
 ########################## End of makefile ###################################
