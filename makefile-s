@@ -1,27 +1,28 @@
 ##############################################################################
-################################ makefile-s ##################################
+################################# makefile-s #################################
 ##############################################################################
 #                                                                            #
-#   makefile of GeneralizedAssignmentBlock and its dependencies, excluding SMS++          #
+#   makefile of GeneralizedAssignmentBlock and its dependencies, excluding   #
+#   SMS++                                                                    #
 #                                                                            #
 #   The makefile defines internally all external libraries required by       #
-#   GeneralizedAssignmentBlock, excluding the SMS++ core ones whose symbols are           #
-#   assumed to have been defined already (typically by including             #
-#   SMS++/lib/makefile). Accordingly, all necessary OBJ, H, -I directives,   #
-#   external libraries + -L< libdirs > are added to the corresponding        #
-#   GAPBk* macros.                                                           #
+#   GeneralizedAssignmentBlock (i.e., BinaryKnapsackBlock), excluding the    #
+#   SMS++ core ones whose symbols are assumed to have been defined already   #
+#   (typically by including SMS++/lib/makefile). Accordingly, all            #
+#   necessary OBJ, H, -I directives, external libraries + -L< libdirs > are  #
+#   added to the corresponding GAPBk* macros.                                #
 #                                                                            #
 #   Input:  $(CC)        = compiler command                                  #
 #           $(SW)        = compiler options                                  #
 #           $(SMS++INC)  = the -I$( core SMS++ directory )                   #
 #           $(SMS++OBJ)  = the core SMS++ library                            #
-#           $(GAPBkSDR)  = the directory where GeneralizedAssignmentBlock source is       #
+#           $(GAPBkSDR)  = the directory where the source is                 #
 #           $(GAPBkODR)  = the directory where the objects have to be put    #
 #                                                                            #
 #   Output: $(GAPBkOBJ)  = the final object(s) / library                     #
 #           $(GAPBkLIB)  = external libraries + -L< libdirs >                #
-#           $(GAPBkH)    = the .h files to include for GeneralizedAssignmentBlock         #
-#       $(GAPBkINC)  = the -I$( GeneralizedAssignmentBlock directory )       #
+#           $(GAPBkH)    = the .h files to include                           #
+#           $(GAPBkINC)  = the -I$( source directory )                       #
 #                                                                            #
 #                             Antonio Frangioni                              #
 #                         Dipartimento di Informatica                        #
@@ -37,6 +38,10 @@
 # *H   is the list of all include files
 # *INC is the -I< include directories >
 
+# define input macros for BinaryKnapsackBlock makefile, then include it
+BKBkSDR = $(GAPBkSDR)/../BinaryKnapsackBlock
+include $(BKBkSDR)/makefile-s
+
 # include the makefile requiring all external modules in input
 include $(GAPBkSDR)/makefile
 
@@ -44,10 +49,10 @@ include $(GAPBkSDR)/makefile
 
 # append external -I directives to GAPBkINC, GAPBkOBJ and GAPBkH as defined
 # by the makefile, thus the := assignment has to be used (use GNU make)
-GAPBkOBJ := $(GAPBkOBJ)
-GAPBkINC := $(GAPBkINC)
+GAPBkOBJ := $(GAPBkOBJ) $(BKBkOBJ)
+GAPBkINC := $(GAPBkINC) $(BKBkINC)
 
 # external libraries for GeneralizedAssignmentBlock
-GAPBkLIB =
+GAPBkLIB = $(BKBkLIB)
 
 ############################ End of makefile #################################

@@ -1,5 +1,5 @@
 ##############################################################################
-################################ makefile ####################################
+################################## makefile ##################################
 ##############################################################################
 #                                                                            #
 #   makefile of GeneralizedAssignmentBlock                                   #
@@ -7,12 +7,15 @@
 #   Note that $(SMS++INC) is assumed to include any -I directive             #
 #   corresponding to external libraries needed by SMS++, at least to the     #
 #   extent in which they are needed by the parts of SMS++ used by            #
-#   GeneralizedAssignmentBlock.                                              #
+#   GeneralizedAssignmentBlock, and that the same holds for $(BKBkINC) and   #
+#   BinaryKnapsackBlock.                                                     #
 #                                                                            #
 #   Input:  $(CC)        = compiler command                                  #
 #           $(SW)        = compiler options                                  #
 #           $(SMS++INC)  = the -I$( core SMS++ directory )                   #
 #           $(SMS++OBJ)  = the libSMS++ library itself                       #
+#           $(BKBkINC)   = the -I$( BinaryKnapsackBlock directory )          #
+#           $(BKBkH)     = the .h files of BinaryKnapsackBlock               #
 #           $(GAPBkSDR)  = the directory where the source is                 #
 #                                                                            #
 #   Output: $(GAPBkOBJ)  = the final object(s) / library                     #
@@ -33,12 +36,11 @@ GAPBkINC = -I$(GAPBkSDR)/include
 
 GAPBkH   = $(GAPBkSDR)/include/GeneralizedAssignmentBlock.h
 
-# the C++20 module [see makefile-mod of SMS++] - - - - - - - - - - - - - - -
-# the prefixes of the modules of the dependencies (e.g., UCBck) go in place
-# of SMS++
+# the C++20 module smspp.generalizedassignmentblock - - - - - - - - - - - - - -
+# [see makefile-mod of SMS++]
 
 $(eval $(call SMSppMODrule,GAPBk,$(GAPBkSDR),GeneralizedAssignmentBlock,\
-	smspp.generalizedassignmentblock,SMS++))
+	smspp.generalizedassignmentblock,BKBk))
 
 # clean - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -47,9 +49,10 @@ clean::
 
 # dependencies: every .o from its .cpp + every recursively included .h- - - -
 
-$(GAPBkSDR)/obj/GeneralizedAssignmentBlock.o: $(GAPBkSDR)/src/GeneralizedAssignmentBlock.cpp \
-	$(GAPBkSDR)/include/GeneralizedAssignmentBlock.h $(SMS++H) $(SMS++OBJ)
+$(GAPBkSDR)/obj/GeneralizedAssignmentBlock.o: \
+	$(GAPBkSDR)/src/GeneralizedAssignmentBlock.cpp $(GAPBkH) $(BKBkH) \
+	$(SMS++H) $(SMS++OBJ)
 	$(CC) -c $(GAPBkSDR)/src/GeneralizedAssignmentBlock.cpp -o $@ \
-	$(GAPBkINC) $(SMS++INC) $(SW)
+	$(GAPBkINC) $(BKBkINC) $(SMS++INC) $(SW)
 
 ########################## End of makefile ###################################
