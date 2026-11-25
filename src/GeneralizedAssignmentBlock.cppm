@@ -3,9 +3,9 @@
 /*--------------------------------------------------------------------------*/
 /** @file
  * Interface of the C++20 module smspp.generalizedassignmentblock, which
- * exports every name that the headers of GeneralizedAssignmentBlock declare at
- * namespace scope, together with the modules it depends on; a translation unit
- * can then write
+ * exports every name that the headers of GeneralizedAssignmentBlock declare
+ * at namespace scope, together with the modules it depends on; a translation
+ * unit can then write
  *
  *     import smspp.generalizedassignmentblock;
  *
